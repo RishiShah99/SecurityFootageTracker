@@ -1,67 +1,41 @@
-import cv2
 import torch
 import torchvision
-from torchvision import transforms as T
+import numpy as np
+import cv2
+from PIL import Image
+from torchvision.transforms import transforms as transforms
+import matplotlib.pyplot as plt
+import utils
 
-# Load the pre-trained Faster R-CNN model
-model = torchvision.models.detection.fasterrcnn_resnet50_fpn(pretrained=True)
+# Load the model
+model = torchvision.models.detection.keypointrcnn_resnet50_fpn(pretrained=False, num_keypoints=17)
+model.load_state_dict(torch.load('model.pth'))
 model.eval()
 
-# COCO dataset classes (only keeping the 'person' class)
-COCO_INSTANCE_CATEGORY_NAMES = [
-    '__background__', 'person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
-    'train', 'truck', 'boat', 'traffic light', 'fire hydrant', 'stop sign', 'parking meter',
-    'bench', 'bird', 'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra',
-    'giraffe', 'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee', 'skis',
-    'snowboard', 'sports ball', 'kite', 'baseball bat', 'baseball glove', 'skateboard',
-    'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon',
-    'bowl', 'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
-    'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed', 'dining table', 'toilet',
-    'tv', 'laptop', 'mouse', 'remote', 'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
-    'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors', 'teddy bear', 'hair drier',
-    'toothbrush'
-]
+# Set Device
+device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+model.to(device)
 
-# Helper function to get prediction
-def get_prediction(img, threshold):
-    transform = T.Compose([T.ToTensor()])
-    img = transform(img)
-    pred = model([img])
-    pred_class = [COCO_INSTANCE_CATEGORY_NAMES[i] for i in list(pred[0]['labels'].numpy())]
-    pred_boxes = [[(i[0], i[1]), (i[2], i[3])] for i in list(pred[0]['boxes'].detach().numpy())]
-    pred_score = list(pred[0]['scores'].detach().numpy())
-    pred_t = [pred_score.index(x) for x in pred_score if x > threshold][-1]
-    pred_boxes = pred_boxes[:pred_t+1]
-    pred_class = pred_class[:pred_t+1]
-    return pred_boxes, pred_class
+# Transformation
+transform = transforms.Compose([
+    transforms.ToTensor(),
+])
 
-# Process video frames
-def process_video(input_video_path, output_video_path, threshold=0.5):
-    cap = cv2.VideoCapture(input_video_path)
-    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
+# Load image
+image_path = 'frames/frame_1.jpg'
+image = Image.open(image_path).convert('RGB')
 
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
+# NumPy copy of the image for OpenCV functions
+orig_numpy = np.array(image, dtype=np.float32)
+orig_numpy = cv2.cvtColor(orig_numpy, cv2.COLOR_RGB2BGR) / 255
+image = transform(image)
+image = image.unsqueeze(0).to(device)
 
-        boxes, pred_cls = get_prediction(frame, threshold)
-        for i in range(len(boxes)):
-            if pred_cls[i] == 'person':
-                cv2.rectangle(frame, boxes[i][0], boxes[i][1], color=(0, 255, 0), thickness=2)
-                cv2.putText(frame, pred_cls[i], boxes[i][0], cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), thickness=1)
+with torch.no_grad():
+    outputs = model(image)
 
-        out.write(frame)
+output_image = utils.draw_keypoints(outputs, orig_numpy)
 
-    cap.release()
-    out.release()
-    cv2.destroyAllWindows()
-
-# Example usage
-video_files = ["video1.mp4", "video2.mp4", "video3.mp4", "video4.mp4", "video5.mp4", "video6.mp4"]
-for i, video_file in enumerate(video_files):
-    process_video(video_file, f"output_video_{i+1}.avi", threshold=0.5)
+# visualize the image
+cv2.imshow('Keypoint image', output_image)
+cv2.waitKey(0)
