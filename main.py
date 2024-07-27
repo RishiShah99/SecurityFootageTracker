@@ -4,7 +4,6 @@ import numpy as np
 import cv2
 from PIL import Image
 from torchvision.transforms import transforms as transforms
-import matplotlib.pyplot as plt
 import utils
 
 # Load the model
@@ -22,7 +21,7 @@ transform = transforms.Compose([
 ])
 
 # Load image
-image_path = 'frames/frame_1.jpg'
+image_path = 'frames/frame_10.jpg'
 image = Image.open(image_path).convert('RGB')
 
 # NumPy copy of the image for OpenCV functions
@@ -36,6 +35,7 @@ with torch.no_grad():
 
 output_image = utils.draw_keypoints(outputs, orig_numpy)
 
-# visualize the image
+# visualize the image using OpenCV
 cv2.imshow('Keypoint image', output_image)
 cv2.waitKey(0)
+cv2.destroyAllWindows()

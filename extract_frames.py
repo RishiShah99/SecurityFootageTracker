@@ -1,14 +1,13 @@
-# This code will extract frames from a video file and save them as images in a folder
 import cv2
 import os
 
-def extract_frames(video_file, output_folder):
+def extract_frames(video_file, output_folder, max_frames=10):
     cap = cv2.VideoCapture(video_file)
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
 
     frame_count = 0
-    while cap.isOpened():
+    while cap.isOpened() and frame_count < max_frames:
         ret, frame = cap.read()
         if not ret:
             break
@@ -22,4 +21,4 @@ def extract_frames(video_file, output_folder):
 # Example usage
 video_file = "Video_1.mp4"
 output_folder = "frames"
-extract_frames(video_file, output_folder)
+extract_frames(video_file, output_folder, max_frames=10)
