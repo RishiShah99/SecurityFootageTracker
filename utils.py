@@ -15,8 +15,6 @@ def draw_keypoints(outputs, image):
             for p in range(keypoints.shape[0]):
                 cv2.circle(image, (int(keypoints[p, 0]), int(keypoints[p, 1])), 
                             3, (0, 255, 0), thickness=-1, lineType=cv2.FILLED)
-                cv2.putText(image, f"{p}", (int(keypoints[p, 0]+10), int(keypoints[p, 1]-5)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
             for ie, e in enumerate(edges):
                 rgb = matplotlib.colors.hsv_to_rgb([
                     ie/float(len(edges)), 1.0, 1.0
