@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pose Estimation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #4CAF50;
+            width: 100%;
+            padding: 1rem;
+            text-align: center;
+            color: white;
+        }
+        .container {
+            margin-top: 2rem;
+        }
+        .upload-form {
+            margin-bottom: 1rem;
+        }
+        .result {
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Pose Estimation</h1>
+    </header>
+    <div class="container">
+        <form class="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" required>
+            <button type="submit">Upload Image</button>
+        </form>
+        <div class="result">
+            {% if result %}
+                <h2>Processed Image</h2>
+                <img src="{{ result }}" alt="Processed Image">
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
